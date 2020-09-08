@@ -1,0 +1,22 @@
+from datetime import datetime
+from azure.eventgrid import EventGridClient
+from msrest.authentication import TopicCredentials
+import uuid
+
+
+def publish_event(data):
+    credentials = TopicCredentials(
+        "Nb3K+Pif1hNKWzk4j7dp6bzbgQywjEiMWGKUs+k8qZk="
+    )
+    event_grid_client = EventGridClient(credentials)
+    event_grid_client.publish_events(
+        "nancyeventgrid.eastus-1.eventgrid.azure.net",
+        events=[{
+            'id': uuid.uuid4(),
+            'subject': "Door1",
+            'data': data,
+            'event_type': 'NancyEventGrid',
+            'event_time': datetime.now(),
+            'data_version': 2
+        }]
+    )
