@@ -10,6 +10,15 @@
         pip install azure-storage-blob
 
 
+## Features
+
+- Facail detection and recognition using Tensorflow model, don't use Dlib
+- Store unidentified faces to Microsoft Azure storage
+- Send the Azure event whenever recognize the known faces
+- Run as script or flask server
+- Send request to register or remove user to the engine
+
+
 ## Running
 
 - Add user to database
