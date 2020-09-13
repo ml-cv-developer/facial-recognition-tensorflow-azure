@@ -20,8 +20,11 @@ class FaceProcess:
         self.db_data_list = []
         self.db_name_list = []
         self.db_feature_list = []
+        self.db_unidentified_name_list = []
+        self.db_unidentified_feature_list = []
 
         self.load_database()
+        self.load_unidentified_db()
 
         if not os.path.isdir(FOLDER_UNIDENTIFIED):
             os.mkdir(FOLDER_UNIDENTIFIED)
@@ -36,6 +39,7 @@ class FaceProcess:
         self.face_result = []
         self.event_data_list = []
         self.azure_store_img_list = []
+        self.azure_store_feature_list = []
         self.video_size_list = []
 
         for i in range(len(camera_list)):
@@ -73,6 +77,26 @@ class FaceProcess:
         self.db_data_list = db_data_list
         self.db_name_list = db_name_list
         self.db_feature_list = db_feature_list
+
+    def load_unidentified_db(self):
+        # ----------------------- load the database ----------------------------
+        db_name_list = []
+        db_feature_list = []
+
+        if os.path.isfile(DB_UNIDENTIFIED_CSV):
+            db_data = func.read_text(DB_UNIDENTIFIED_CSV)
+            db_data_list = db_data.splitlines()
+            for ii in range(len(db_data_list)):
+                cell = db_data_list[ii].split(',')
+                db_name_list.append(cell[0])
+                db_feature_list.append([])
+                for jj in range(1, len(cell)):
+                    db_feature_list[-1].append(float(cell[jj]))
+        else:
+            print("\tCouldn't find the unidentified database file.")
+
+        self.db_unidentified_name_list = db_name_list
+        self.db_unidentified_feature_list = db_feature_list
 
     @staticmethod
     def get_valid_detection(face_aligned_list, face_pos_list, face_score_list):
@@ -182,7 +206,7 @@ class FaceProcess:
 
             cv2.putText(img_ret, text_face, (pos[0], pos[3] + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        return coordinate_list, name_list, score_list, img_ret
+        return coordinate_list, name_list, score_list, img_ret, feature_list
 
     def check_image_file(self, img_file):
         img = cv2.imread(img_file)
@@ -203,7 +227,7 @@ class FaceProcess:
             sc = 1
 
         img = cv2.resize(img, None, fx=1/sc, fy=1/sc)
-        coordinates, names, scores, img_ret = self.check_image(img)
+        coordinates, names, scores, img_ret, _ = self.check_image(img)
 
         for i in range(len(coordinates)):
             print("\tFace detected => Name: {}, Score: {}".format(names[i], round(scores[i], 2)))
@@ -233,7 +257,7 @@ class FaceProcess:
             if cnt % 2 == 0:
                 continue
 
-            coordinate_list, name_list, score_list, img = self.check_image(frame)
+            coordinate_list, name_list, score_list, img, _ = self.check_image(frame)
 
             cv2.imshow('result', img)
             if SAVE_VIDEO:
@@ -270,7 +294,7 @@ class FaceProcess:
                     img_color = self.frame_list[camera_ind].copy()
 
                     # ---------------- detect the faces and analyse -------------------
-                    coordinates, names, scores, img_ret = self.check_image(img_color)
+                    coordinates, names, scores, img_ret, feature_list = self.check_image(img_color)
                     self.face_result[camera_ind][FACE_COORDINATES] = coordinates
                     self.face_result[camera_ind][FACE_SCORES] = scores
                     self.face_result[camera_ind][FACE_NAMES] = names
@@ -297,6 +321,7 @@ class FaceProcess:
                                 [x1, y1, x2, y2] = frontal_faces[j]
                                 cv2.rectangle(img_ret, (x1, y1), (x2, y2), (0, 0, 255), 2)
                                 self.azure_store_img_list.append(img_crop)
+                                self.azure_store_feature_list.append(feature_list[i])
                                 break
 
                     if SEND_EVENT:
@@ -329,12 +354,38 @@ class FaceProcess:
         while True:
             if len(self.azure_store_img_list) == 0:
                 time.sleep(0.1)
-            else:       # store images to azure
-                img_name = str(time.time()) + '.jpg'
+            else:
+                # compare with the registered unidentified data
+
+                max_val = 0
+                max_name = 'None'
+                for j in range(len(self.db_unidentified_name_list)):
+                    _, score = self.class_face.compare(self.azure_store_feature_list[0], self.db_unidentified_feature_list[j])
+                    if score > max_val:
+                        max_val = score
+                        max_name = self.db_unidentified_name_list[j]
+
+                if max_val <= 0.4:
+                    unidentified_index = str(len(self.db_unidentified_name_list) + 1)
+                    img_name = unidentified_index + '_' + str(time.time()) + '.jpg'
+                    self.db_unidentified_name_list.append(unidentified_index)
+                    self.db_unidentified_feature_list.append(self.azure_store_feature_list[0])
+
+                    feature_db_line = unidentified_index
+                    for i in range(len(self.azure_store_feature_list[0])):
+                        feature_db_line += ',' + str(round(self.azure_store_feature_list[0][i], 8))
+                    func.append_text(DB_UNIDENTIFIED_CSV, feature_db_line + '\n')
+                else:
+                    img_name = max_name + '_' + str(time.time()) + '.jpg'
+
+                # save to local folder
                 img_path = os.path.join(FOLDER_UNIDENTIFIED, img_name)
                 cv2.imwrite(img_path, self.azure_store_img_list[0])
-                self.azure_store_img_list.pop(0)
+
+                # store images to azure
                 blob_control.upload_blob(img_path, img_name)
+                self.azure_store_img_list.pop(0)
+                self.azure_store_feature_list.pop(0)
                 print("Unidentified face is stored to Azure storage!")
 
     def check_video_thread(self):

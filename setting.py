@@ -12,6 +12,9 @@ DB_PATH = 'database'
 DB_CSV = os.path.join(DB_PATH, 'register.csv')
 DB_IMAGES_PATH = os.path.join(DB_PATH, 'images')
 
+FOLDER_UNIDENTIFIED = 'save_unidentified'
+DB_UNIDENTIFIED_CSV = os.path.join(FOLDER_UNIDENTIFIED, 'unregistered.csv')
+
 # --------------- Face detection ----------------
 DETECTION_THRESHOLD = 0.99
 RECOGNITION_THRESHOLD = 0.6
@@ -24,7 +27,6 @@ FACE_COORDINATES = 'coordinates'
 FACE_SCORES = 'scores'
 FACE_NAMES = 'names'
 SAVE_VIDEO = False
-FOLDER_UNIDENTIFIED = 'save_unidentified'
 
 # ----------------- Azure Action ------------------
 SEND_EVENT = False
