@@ -5,6 +5,7 @@ from datetime import datetime
 from face_haar import FaceHaar
 import blob_control
 import _thread as thread
+import pytz
 import time
 import func
 import cv2
@@ -327,8 +328,8 @@ class FaceProcess:
                     if SEND_EVENT:
                         if len(self.face_result[camera_ind][FACE_NAMES]) > 0:
                             data = {
-                                'timestamp': str(datetime.now()),
-                                'camera_id': camera_ind,
+                                'timestamp': str(datetime.now(pytz.timezone('US/Central'))),
+                                'camera_id': func.get_camera_id(self.camera_list[camera_ind]),
                                 'camera_url': self.camera_list[camera_ind],
                                 'detection': str(self.face_result[camera_ind])
                             }

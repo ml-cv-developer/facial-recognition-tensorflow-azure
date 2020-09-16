@@ -150,3 +150,24 @@ def check_overlap_rect(rect1, rect2):
         return False
     else:
         return True
+
+
+def get_camera_id(cam_url):
+    """
+        get channel index 5 from the url "rtsp://admin:pass@1.2.3.4:554/cam/realmonitor?channel=5&subtype=0"
+    """
+    ind1 = cam_url.find('channel=')
+    if ind1 == -1:
+        return '-1'
+
+    new_string = cam_url[ind1 + 8:]
+    ind2 = new_string.find('&')
+    if ind2 == -1:
+        return '-1'
+
+    str_id = new_string[:ind2]
+
+    if str_id.isdigit():
+        return str_id
+    else:
+        return '-1'
