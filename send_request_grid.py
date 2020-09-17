@@ -13,7 +13,7 @@ def publish_event(data):
         "nancyeventgrid.eastus-1.eventgrid.azure.net",
         events=[{
             'id': uuid.uuid4(),
-            'subject': "Door1",
+            'subject': "FaceData",
             'data': data,
             'event_type': 'NancyEventGrid',
             'event_time': datetime.now(),

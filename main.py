@@ -360,13 +360,14 @@ class FaceProcess:
 
                 max_val = 0
                 max_name = 'None'
+                f_store = True
                 for j in range(len(self.db_unidentified_name_list)):
                     _, score = self.class_face.compare(self.azure_store_feature_list[0], self.db_unidentified_feature_list[j])
                     if score > max_val:
                         max_val = score
                         max_name = self.db_unidentified_name_list[j]
 
-                if max_val <= 0.4:
+                if max_val <= RECOGNITION_THRESHOLD:
                     unidentified_index = str(len(self.db_unidentified_name_list) + 1)
                     img_name = unidentified_index + '_' + str(time.time()) + '.jpg'
                     self.db_unidentified_name_list.append(unidentified_index)
@@ -377,14 +378,25 @@ class FaceProcess:
                         feature_db_line += ',' + str(round(self.azure_store_feature_list[0][i], 8))
                     func.append_text(DB_UNIDENTIFIED_CSV, feature_db_line + '\n')
                 else:
+                    blob_list = blob_control.get_container_list()
+                    cnt = 0
+                    for i in range(len(blob_list)):
+                        if blob_list[i].startswith(max_name + '_'):
+                            cnt += 1
+
+                    if cnt > 5:
+                        f_store = False
+
                     img_name = max_name + '_' + str(time.time()) + '.jpg'
 
-                # save to local folder
-                img_path = os.path.join(FOLDER_UNIDENTIFIED, img_name)
-                cv2.imwrite(img_path, self.azure_store_img_list[0])
+                if f_store:
+                    # save to local folder
+                    img_path = os.path.join(FOLDER_UNIDENTIFIED, img_name)
+                    cv2.imwrite(img_path, self.azure_store_img_list[0])
 
-                # store images to azure
-                blob_control.upload_blob(img_path, img_name)
+                    # store images to azure
+                    blob_control.upload_blob(img_path, img_name)
+
                 self.azure_store_img_list.pop(0)
                 self.azure_store_feature_list.pop(0)
                 print("Unidentified face is stored to Azure storage!")
