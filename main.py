@@ -330,7 +330,6 @@ class FaceProcess:
                             data = {
                                 'timestamp': str(datetime.now(pytz.timezone('US/Central'))),
                                 'camera_id': func.get_camera_id(self.camera_list[camera_ind]),
-                                'camera_url': self.camera_list[camera_ind],
                                 'detection': str(self.face_result[camera_ind])
                             }
                             self.event_data_list.append(data)

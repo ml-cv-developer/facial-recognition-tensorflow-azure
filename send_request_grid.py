@@ -1,6 +1,7 @@
 from datetime import datetime
 from azure.eventgrid import EventGridClient
 from msrest.authentication import TopicCredentials
+import pytz
 import uuid
 
 
@@ -16,7 +17,7 @@ def publish_event(data):
             'subject': "FaceData",
             'data': data,
             'event_type': 'NancyEventGrid',
-            'event_time': datetime.now(),
+            'event_time': datetime.now(pytz.timezone('US/Central')),
             'data_version': 2
         }]
     )

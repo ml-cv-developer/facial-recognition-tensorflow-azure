@@ -29,5 +29,5 @@ FACE_NAMES = 'names'
 SAVE_VIDEO = False
 
 # ----------------- Azure Action ------------------
-SEND_EVENT = False
-SEND_FACES = True
+SEND_EVENT = True
+SEND_FACES = False
