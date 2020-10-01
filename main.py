@@ -233,9 +233,10 @@ class FaceProcess:
         for i in range(len(coordinates)):
             print("\tFace detected => Name: {}, Score: {}".format(names[i], round(scores[i], 2)))
 
-        cv2.imshow('result', img_ret)
         cv2.imwrite('result.jpg', img_ret)
-        cv2.waitKey(0)
+        if SHOW_VIDEO:
+            cv2.imshow('result', img_ret)
+            cv2.waitKey(0)
 
     def check_video(self, video_file):
         cap = cv2.VideoCapture(video_file)
@@ -260,7 +261,9 @@ class FaceProcess:
 
             coordinate_list, name_list, score_list, img, _ = self.check_image(frame)
 
-            cv2.imshow('result', img)
+            if SHOW_VIDEO:
+                cv2.imshow('result', img)
+
             if SAVE_VIDEO:
                 vid_capture.write(img)
 
@@ -416,7 +419,9 @@ class FaceProcess:
                 if self.frame_list[cam_ind] is not None:
                     if DISPLAY_DETECT_FRAME_ONLY:
                         if self.ret_image[cam_ind] is not None:
-                            cv2.imshow('org' + str(cam_ind), self.ret_image[cam_ind])
+                            if SHOW_VIDEO:
+                                cv2.imshow('org' + str(cam_ind), self.ret_image[cam_ind])
+
                             if SAVE_VIDEO:
                                 self.video_capture_list[cam_ind].write(self.ret_image[cam_ind])
                     else:
@@ -436,7 +441,9 @@ class FaceProcess:
                                 cv2.putText(img_org, text_face, (pos[0], pos[3] + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                                             (0, 255, 0), 2)
 
-                            cv2.imshow('org' + str(cam_ind), img_org)
+                            if SHOW_VIDEO:
+                                cv2.imshow('org' + str(cam_ind), img_org)
+
                             if SAVE_VIDEO:
                                 self.video_capture_list[cam_ind].write(img_org)
 
